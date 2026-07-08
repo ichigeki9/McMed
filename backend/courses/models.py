@@ -1,0 +1,90 @@
+import math
+from django.db import models
+
+
+class Course(models.Model):
+    TYPE_KPP    = 'kpp'
+    TYPE_RECERT = 'recert'
+    TYPE_CHOICES = [
+        (TYPE_KPP,    'Kwalifikowana Pierwsza Pomoc'),
+        (TYPE_RECERT, 'Recertyfikacja'),
+    ]
+
+    # Podstawowe
+    name             = models.CharField(max_length=200)
+    course_type      = models.CharField(max_length=10, choices=TYPE_CHOICES, default=TYPE_KPP)
+    city             = models.CharField(max_length=100, blank=True)
+    max_participants = models.PositiveIntegerField(default=0)
+    price            = models.DecimalField(max_digits=8, decimal_places=2, default=0)
+    is_active        = models.BooleanField(default=True)
+    created_at       = models.DateTimeField(auto_now_add=True)
+
+    # Terminy – 6 wybranych dat
+    course_days  = models.JSONField(default=list)   # ["2026-07-01", ...]
+    start_date   = models.DateField(null=True, blank=True)
+    end_date     = models.DateField(null=True, blank=True)
+
+    # Egzamin
+    exam_date     = models.DateField(null=True, blank=True)
+    exam_location = models.CharField(max_length=300, blank=True)
+
+    # Organizacja
+    entity_director   = models.CharField(max_length=200, blank=True)
+    academic_director = models.CharField(max_length=200, blank=True)
+
+    # Kadra – lista prowadzących (rozmiar = ceil(max_participants / 6))
+    instructors = models.JSONField(default=list)   # ["Jan Kowalski", ...]
+
+    # Inne osoby
+    psychologist      = models.CharField(max_length=200, blank=True)
+    committee_chair   = models.CharField(max_length=200, blank=True)
+    committee_member1 = models.CharField(max_length=200, blank=True)
+    committee_member2 = models.CharField(max_length=200, blank=True)
+
+    class Meta:
+        ordering = ['start_date']
+
+    def save(self, *args, **kwargs):
+        if self.course_days:
+            days = sorted(d for d in self.course_days if d)
+            self.start_date = days[0]  if days else None
+            self.end_date   = days[-1] if days else None
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f'{self.name} ({self.start_date})'
+
+    @property
+    def spots_left(self):
+        return self.max_participants - self.enrollments.count()
+
+    @property
+    def is_full(self):
+        return self.spots_left <= 0
+
+    @property
+    def instructors_count(self):
+        return math.ceil(self.max_participants / 6) if self.max_participants else 1
+
+
+class Enrollment(models.Model):
+    course           = models.ForeignKey(Course, on_delete=models.PROTECT, related_name='enrollments')
+    first_name       = models.CharField(max_length=100)
+    last_name        = models.CharField(max_length=100)
+    pesel            = models.CharField(max_length=11)
+    birth_date       = models.DateField()
+    email            = models.EmailField(blank=True, default='')
+    phone            = models.CharField(max_length=20, blank=True, default='')
+    zip_code         = models.CharField(max_length=6)
+    city             = models.CharField(max_length=100)
+    street           = models.CharField(max_length=200)
+    house_number     = models.CharField(max_length=20)
+    apartment_number = models.CharField(max_length=20, blank=True)
+    photo_consent    = models.BooleanField(default=False)
+    created_at       = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'{self.last_name} {self.first_name} – {self.course}'

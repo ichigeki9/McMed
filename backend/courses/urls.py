@@ -1,0 +1,12 @@
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('', views.PublicCourseListView.as_view(), name='course-list'),
+    path('enrollments/', views.PublicEnrollView.as_view(), name='enroll'),
+    path('enrollments/list/', views.AdminEnrollmentListView.as_view(), name='enrollment-list'),
+    path('enrollments/<int:pk>/', views.AdminEnrollmentDeleteView.as_view(), name='enrollment-delete'),
+    path('admin/', views.AdminCourseListView.as_view(), name='admin-course-list'),
+    path('admin/create/', views.AdminCourseCreateView.as_view(), name='admin-course-create'),
+    path('admin/<int:pk>/', views.AdminCourseDetailView.as_view(), name='admin-course-detail'),
+]
