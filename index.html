@@ -811,6 +811,7 @@
             opacity: 0;
             transition: opacity .3s ease;
             font-size: 1.6rem;
+            pointer-events: none;
         }
         .photo:hover .photo-zoom { opacity: 1; }
 
@@ -853,6 +854,37 @@
             background: none;
             border: none;
             line-height: 1;
+        }
+        .lightbox-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255,255,255,0.12);
+            border: none;
+            color: #fff;
+            font-size: 2rem;
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+            z-index: 10000;
+            user-select: none;
+        }
+        .lightbox-nav:hover { background: rgba(255,255,255,0.25); }
+        .lightbox-prev { left: 1.5rem; }
+        .lightbox-next { right: 1.5rem; }
+        .lightbox-counter {
+            position: absolute;
+            bottom: 1.2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255,255,255,0.5);
+            font-size: 0.85rem;
+            letter-spacing: 1px;
         }
 
         /* ─── HAMBURGER ─────────────────────────────── */
@@ -1294,8 +1326,7 @@
             <div class="about-text">
                 <p>
                     Jesteśmy czynnymi zawodowo ratownikami medyczni – uczymy tego, co
-                    sami robimy każdego dnia. Mc Med powstało z jednej prostedos
-                    j potrzeby:
+                    sami robimy każdego dnia. Mc Med powstało z jednej prostej potrzeby:
                     dać ludziom realne umiejętności, które działają pod presją,
                     a nie tylko wyglądają dobrze na papierze.
                 </p>
@@ -1308,7 +1339,6 @@
                 </p>
                 <ul class="check-list">
                     <li>Instruktorzy czynni zawodowo – uczymy z praktyki, nie z podręcznika</li>
-                    <li>Maksymalnie 6 uczestników na instruktora – każdy ćwiczy, nie obserwuje</li>
                     <li>Profesjonalny sprzęt: AED, defibrylatory, fantomy dorosłych i dzieci</li>
                     <li>Certyfikat KPP zgodny z ustawą o PRM, uznawany w całej Polsce</li>
                     <li>Przypomnimy o recertyfikacji SMS-em i e-mailem – zanim termin wygaśnie</li>
@@ -1506,6 +1536,18 @@
                 <img src="pic/zdj4.jpg" alt="Kurs KPP">
                 <span class="photo-zoom">🔍</span>
             </div>
+            <div class="photo">
+                <img src="pic/zdj6.jpeg" alt="Szkolenie KPP">
+                <span class="photo-zoom">🔍</span>
+            </div>
+            <div class="photo wide">
+                <img src="pic/zdj7.jpeg" alt="Uczestnicy kursu">
+                <span class="photo-zoom">🔍</span>
+            </div>
+            <div class="photo">
+                <img src="pic/zdj8.jpeg" alt="Ćwiczenia KPP">
+                <span class="photo-zoom">🔍</span>
+            </div>
         </div>
 
         <div class="gallery-cta reveal">
@@ -1646,7 +1688,10 @@
 <!-- ═══ LIGHTBOX ═══════════════════════════════════════════════════════ -->
 <div class="lightbox" id="lightbox">
     <button class="lightbox-close" id="lightbox-close">✕</button>
+    <button class="lightbox-nav lightbox-prev" id="lightbox-prev">&#8592;</button>
     <img src="" alt="" id="lightbox-img">
+    <button class="lightbox-nav lightbox-next" id="lightbox-next">&#8594;</button>
+    <span class="lightbox-counter" id="lightbox-counter"></span>
 </div>
 
 <script>
@@ -1682,26 +1727,47 @@ const countObserver = new IntersectionObserver(entries => {
 document.querySelectorAll('[data-count]').forEach(el => countObserver.observe(el));
 
 /* ── Lightbox ── */
-const lightbox     = document.getElementById('lightbox');
-const lightboxImg  = document.getElementById('lightbox-img');
+const lightbox      = document.getElementById('lightbox');
+const lightboxImg   = document.getElementById('lightbox-img');
 const lightboxClose = document.getElementById('lightbox-close');
+const lightboxPrev  = document.getElementById('lightbox-prev');
+const lightboxNext  = document.getElementById('lightbox-next');
+const lightboxCounter = document.getElementById('lightbox-counter');
 
-document.querySelectorAll('.photo img').forEach(img => {
-    img.style.cursor = 'pointer';
-    img.addEventListener('click', () => {
-        lightboxImg.src = img.src;
-        lightboxImg.alt = img.alt;
-        lightbox.classList.add('open');
-        document.body.style.overflow = 'hidden';
-    });
+const galleryPhotos = Array.from(document.querySelectorAll('.photo'));
+let currentIndex = 0;
+
+function openLightbox(index) {
+    currentIndex = index;
+    const img = galleryPhotos[currentIndex].querySelector('img');
+    lightboxImg.src = img.src;
+    lightboxImg.alt = img.alt;
+    lightboxCounter.textContent = (currentIndex + 1) + ' / ' + galleryPhotos.length;
+    lightbox.classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+function showPrev() { openLightbox((currentIndex - 1 + galleryPhotos.length) % galleryPhotos.length); }
+function showNext() { openLightbox((currentIndex + 1) % galleryPhotos.length); }
+
+galleryPhotos.forEach((photo, i) => {
+    photo.style.cursor = 'pointer';
+    photo.addEventListener('click', () => openLightbox(i));
 });
+
 function closeLightbox() {
     lightbox.classList.remove('open');
     document.body.style.overflow = '';
 }
 lightboxClose.addEventListener('click', closeLightbox);
+lightboxPrev.addEventListener('click', e => { e.stopPropagation(); showPrev(); });
+lightboxNext.addEventListener('click', e => { e.stopPropagation(); showNext(); });
 lightbox.addEventListener('click', e => { if (e.target === lightbox) closeLightbox(); });
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+document.addEventListener('keydown', e => {
+    if (!lightbox.classList.contains('open')) return;
+    if (e.key === 'Escape') closeLightbox();
+    if (e.key === 'ArrowLeft') showPrev();
+    if (e.key === 'ArrowRight') showNext();
+});
 
 /* ── Hamburger menu ── */
 const navToggle = document.querySelector('.nav-toggle');
