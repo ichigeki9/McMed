@@ -8,6 +8,9 @@ import ParticipantList from './pages/admin/ParticipantList'
 import Login from './pages/Login'
 import NotFound from './pages/NotFound'
 import EnrollForm from './pages/participant/EnrollForm'
+import ActivateAccount from './pages/participant/ActivateAccount'
+import ParticipantLogin from './pages/participant/ParticipantLogin'
+import ParticipantDashboard from './pages/participant/ParticipantDashboard'
 
 export default function App() {
   return (
@@ -15,8 +18,11 @@ export default function App() {
       <Routes>
         <Route path="/login" element={<Login />} />
 
-        {/* Formularz publiczny */}
+        {/* Strefa uczestnika */}
         <Route path="/zapisz-sie" element={<EnrollForm />} />
+        <Route path="/aktywuj/:token" element={<ActivateAccount />} />
+        <Route path="/zaloguj-sie" element={<ParticipantLogin />} />
+        <Route path="/konto" element={<ParticipantDashboard />} />
 
         {/* Panel właściciela */}
         <Route path="/admin" element={<AdminLayout />}>

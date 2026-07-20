@@ -19,6 +19,7 @@ const EMPTY = {
   password: '',
   confirm_password: '',
   photo_consent: false,
+  data_consent: false,
 }
 
 export default function EnrollForm() {
@@ -58,6 +59,7 @@ export default function EnrollForm() {
     if (!form.city.trim())       e.city       = 'Podaj miejscowość.'
     if (!form.street.trim())     e.street     = 'Podaj ulicę.'
     if (!form.house_number.trim()) e.house_number = 'Podaj numer domu.'
+    if (!form.data_consent)        e.data_consent = 'Zgoda na przetwarzanie danych jest wymagana.'
     if (!form.login.trim())        e.login    = 'Podaj login.'
     if (form.password.length < 8)  e.password = 'Hasło musi mieć min. 8 znaków.'
     if (form.password !== form.confirm_password) e.confirm_password = 'Hasła nie są zgodne.'
@@ -100,7 +102,9 @@ export default function EnrollForm() {
           </div>
           <h2 className="text-2xl font-extrabold text-gray-900 mb-3">Zapisano!</h2>
           <p className="text-gray-500 text-sm leading-relaxed mb-6">
-            Twoje zgłoszenie zostało przyjęte. Skontaktujemy się z Tobą w celu potwierdzenia.
+            Twoje zgłoszenie zostało przyjęte. Sprawdź skrzynkę mailową –
+            wysłaliśmy Ci link aktywacyjny do konta oraz potwierdzenie zapisu.
+            Skontaktujemy się z Tobą telefonicznie w celu potwierdzenia.
           </p>
           <a
             href="/"
@@ -226,6 +230,20 @@ export default function EnrollForm() {
         <section className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
           <h2 className="text-base font-bold text-gray-900 mb-4">Zgody</h2>
           <label className="flex items-start gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              name="data_consent"
+              checked={form.data_consent}
+              onChange={handleChange}
+              className="mt-0.5 h-4 w-4 accent-red-600"
+            />
+            <span className="text-sm text-gray-700 leading-relaxed">
+              Wyrażam zgodę na przetwarzanie moich danych osobowych przez Mc Med w celu realizacji kursu
+              oraz kontaktu w sprawach z nim związanych, zgodnie z Rozporządzeniem RODO. *
+            </span>
+          </label>
+          {errors.data_consent && <p className="text-red-500 text-xs mt-1 ml-7">{errors.data_consent}</p>}
+          <label className="flex items-start gap-3 cursor-pointer mt-4">
             <input
               type="checkbox"
               name="photo_consent"

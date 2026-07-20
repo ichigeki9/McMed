@@ -1,5 +1,6 @@
 import math
 from django.db import models
+from django.contrib.auth import get_user_model
 
 
 class Course(models.Model):
@@ -69,6 +70,10 @@ class Course(models.Model):
 
 class Enrollment(models.Model):
     course           = models.ForeignKey(Course, on_delete=models.PROTECT, related_name='enrollments')
+    user             = models.ForeignKey(
+                           get_user_model(), on_delete=models.SET_NULL,
+                           null=True, blank=True, related_name='enrollments',
+                       )
     first_name       = models.CharField(max_length=100)
     last_name        = models.CharField(max_length=100)
     pesel            = models.CharField(max_length=11)

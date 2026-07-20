@@ -124,3 +124,6 @@ DEFAULT_FROM_EMAIL  = config('DEFAULT_FROM_EMAIL',  default='noreply@mcmed.pl')
 # ─── SMS API ─────────────────────────────────────────────────────────
 SMS_API_TOKEN = config('SMS_API_TOKEN', default='')
 SMS_API_SENDER = config('SMS_API_SENDER', default='McMed')
+
+# ─── Frontend ────────────────────────────────────────────────────────
+FRONTEND_URL = config('FRONTEND_URL', default='http://localhost:3000')
