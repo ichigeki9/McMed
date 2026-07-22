@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { adminFetchCourse, adminUpdateCourse, adminFetchEnrollments, adminDeleteEnrollment } from '../../api/admin'
+import { adminFetchCourse, adminUpdateCourse, adminFetchEnrollments, adminDeleteEnrollment, adminDownloadDocument, adminDownloadXlsx } from '../../api/admin'
 import * as XLSX from 'xlsx'
 
 function formatDate(iso) {
@@ -84,6 +84,9 @@ function CourseForm({ initial, onSaved }) {
     <form onSubmit={handleSubmit} className="space-y-6 mt-6">
 
       <Section title="Informacje ogólne">
+        <div className="text-xs text-gray-400">
+          Utworzono: <span className="font-medium text-gray-500">{formatDateTime(form.created_at)}</span>
+        </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="field-label">Typ kursu</label>
@@ -102,7 +105,7 @@ function CourseForm({ initial, onSaved }) {
         </div>
         <Field label="Tytuł kursu" name="name" value={form.name} onChange={handleChange} error={errors.name} />
         <div className="grid grid-cols-2 gap-4">
-          <Field label="Miejscowość" name="city" value={form.city} onChange={handleChange} error={errors.city} />
+          <Field label="Adres kursu" name="city" value={form.city} onChange={handleChange} error={errors.city} placeholder="np. 30-001 Kraków, ul. Medyczna 5" />
           <Field label="Liczba kursantów" name="max_participants" value={form.max_participants} onChange={handleChange} error={errors.max_participants} type="number" min="1" />
         </div>
         <Field label="Cena (zł)" name="price" value={form.price} onChange={handleChange} type="number" min="0" step="0.01" required={false} />
@@ -127,7 +130,7 @@ function CourseForm({ initial, onSaved }) {
         </div>
         <div className="grid grid-cols-2 gap-4">
           <Field label="Data egzaminu" name="exam_date" value={form.exam_date || ''} onChange={handleChange} type="date" required={false} />
-          <Field label="Miejsce egzaminu" name="exam_location" value={form.exam_location} onChange={handleChange} required={false} />
+          <Field label="Miejsce egzaminu" name="exam_location" value={form.exam_location} onChange={handleChange} required={false} placeholder="np. 30-001 Kraków, ul. Medyczna 5" />
         </div>
       </Section>
 
@@ -358,7 +361,7 @@ export default function CourseDetail() {
 
       {/* Zakładki */}
       <div className="flex gap-1 border-b border-gray-200 mt-6">
-        {[['dane', 'Dane kursu'], ['uczestnicy', `Uczestnicy (${course.max_participants - course.spots_left}/${course.max_participants})`]].map(([key, label]) => (
+        {[['dane', 'Dane kursu'], ['uczestnicy', `Uczestnicy (${course.max_participants - course.spots_left}/${course.max_participants})`], ['dokumenty', 'Dokumenty']].map(([key, label]) => (
           <button key={key} onClick={() => setTab(key)}
             className={`px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px ${
               tab === key ? 'border-red-600 text-red-600' : 'border-transparent text-gray-500 hover:text-gray-800'
@@ -370,6 +373,103 @@ export default function CourseDetail() {
 
       {tab === 'dane' && <CourseForm initial={course} onSaved={setCourse} />}
       {tab === 'uczestnicy' && <EnrollmentTable courseId={id} courseName={course.name} />}
+      {tab === 'dokumenty' && <DocumentsTab courseId={id} />}
+    </div>
+  )
+}
+
+// ─── Zakładka: Dokumenty ──────────────────────────────────────────────
+
+const DOCUMENTS = [
+  { filename: 'file1', label: 'File 1', description: '' },
+  { filename: 'file2', label: 'File 2', description: '' },
+  { filename: 'file3', label: 'File 3', description: '' },
+  { filename: 'file4', label: 'File 4', description: '' },
+  { filename: 'file5', label: 'File 5', description: '' },
+  { filename: 'file6', label: 'File 6', description: '' },
+]
+
+const XLSX_DOCUMENTS = [
+  { filename: 'program', label: 'Program zajęć', description: '' },
+]
+
+function DocumentsTab({ courseId }) {
+  const [downloading, setDownloading] = useState(null)
+  const [downloaded, setDownloaded]   = useState(new Set())
+  const [error, setError]             = useState('')
+
+  async function handleDownload(filename, label) {
+    setDownloading(filename)
+    setError('')
+    try {
+      await adminDownloadDocument(courseId, filename, label)
+      setDownloaded(prev => new Set([...prev, filename]))
+    } catch {
+      setError('Nie udało się pobrać dokumentu.')
+    } finally {
+      setDownloading(null)
+    }
+  }
+
+  async function handleDownloadXlsx(filename, label) {
+    setDownloading(`xlsx_${filename}`)
+    setError('')
+    try {
+      await adminDownloadXlsx(courseId, filename, label)
+      setDownloaded(prev => new Set([...prev, `xlsx_${filename}`]))
+    } catch {
+      setError('Nie udało się pobrać dokumentu.')
+    } finally {
+      setDownloading(null)
+    }
+  }
+
+  return (
+    <div className="mt-6 space-y-3">
+      {DOCUMENTS.map(({ filename, label, description }) => {
+        const isDone = downloaded.has(filename)
+        const isLoading = downloading === filename
+        return (
+          <div key={filename} className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm flex items-center justify-between">
+            <div>
+              <p className="text-sm font-semibold text-gray-900">{label}</p>
+              {description && <p className="text-xs text-gray-400 mt-0.5">{description}</p>}
+            </div>
+            <button
+              onClick={() => handleDownload(filename, label)}
+              disabled={isLoading}
+              className={`flex items-center gap-1.5 text-sm font-semibold text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-60 ${
+                isDone ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700 active:bg-red-800'
+              }`}
+            >
+              {isLoading ? 'Pobieranie…' : isDone ? '✓ Pobrane' : '↓ Pobierz .docx'}
+            </button>
+          </div>
+        )
+      })}
+      {XLSX_DOCUMENTS.map(({ filename, label, description }) => {
+        const key = `xlsx_${filename}`
+        const isDone = downloaded.has(key)
+        const isLoading = downloading === key
+        return (
+          <div key={key} className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm flex items-center justify-between">
+            <div>
+              <p className="text-sm font-semibold text-gray-900">{label}</p>
+              {description && <p className="text-xs text-gray-400 mt-0.5">{description}</p>}
+            </div>
+            <button
+              onClick={() => handleDownloadXlsx(filename, label)}
+              disabled={isLoading}
+              className={`flex items-center gap-1.5 text-sm font-semibold text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-60 ${
+                isDone ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700 active:bg-red-800'
+              }`}
+            >
+              {isLoading ? 'Pobieranie…' : isDone ? '✓ Pobrane' : '↓ Pobierz .xlsx'}
+            </button>
+          </div>
+        )
+      })}
+      {error && <p className="text-red-600 text-sm">{error}</p>}
     </div>
   )
 }

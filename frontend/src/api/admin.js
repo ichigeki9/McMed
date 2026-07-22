@@ -24,3 +24,29 @@ export const adminFetchEnrollments = (courseId) => {
 
 export const adminDeleteEnrollment = (id) =>
   axios.delete(`/api/courses/enrollments/${id}/`, { headers: authHeader() })
+
+export const adminDownloadDocument = async (courseId, filename, docName) => {
+  const response = await axios.get(`/api/documents/courses/${courseId}/${filename}/`, {
+    headers: authHeader(),
+    responseType: 'blob',
+  })
+  const url = window.URL.createObjectURL(new Blob([response.data]))
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `${docName}_kurs_${courseId}.docx`
+  a.click()
+  window.URL.revokeObjectURL(url)
+}
+
+export const adminDownloadXlsx = async (courseId, filename, docName) => {
+  const response = await axios.get(`/api/documents/courses/${courseId}/xlsx/${filename}/`, {
+    headers: authHeader(),
+    responseType: 'blob',
+  })
+  const url = window.URL.createObjectURL(new Blob([response.data]))
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `${docName}_kurs_${courseId}.xlsx`
+  a.click()
+  window.URL.revokeObjectURL(url)
+}

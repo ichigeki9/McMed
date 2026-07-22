@@ -7,7 +7,7 @@ const today = new Date().toISOString().slice(0, 10)
 const DUMMY = {
   name: 'Kurs KPP – edycja lipcowa 2026',
   course_type: 'kpp',
-  city: 'Kraków',
+  city: '30-001 Kraków, ul. Medyczna 5',
   max_participants: '12',
   price: '800',
   course_days: ['2026-07-07', '2026-07-08', '2026-07-09', '2026-07-14', '2026-07-15', '2026-07-16'],
@@ -96,7 +96,7 @@ export default function CourseCreate() {
   function validate() {
     const e = {}
     if (!form.name.trim())           e.name           = 'Podaj tytuł kursu.'
-    if (!form.city.trim())           e.city           = 'Podaj miejscowość.'
+    if (!form.city.trim())           e.city           = 'Podaj adres kursu.'
     if (!form.max_participants || parseInt(form.max_participants) < 1)
                                      e.max_participants = 'Podaj liczbę kursantów.'
     const filledDays = form.course_days.filter(d => d)
@@ -194,8 +194,9 @@ export default function CourseCreate() {
           <Field label="Tytuł kursu" name="name" value={form.name}
             onChange={handleChange} error={errors.name} />
           <div className="grid grid-cols-2 gap-4">
-            <Field label="Miejscowość" name="city" value={form.city}
-              onChange={handleChange} error={errors.city} />
+            <Field label="Adres kursu" name="city" value={form.city}
+              onChange={handleChange} error={errors.city}
+              placeholder="np. 30-001 Kraków, ul. Medyczna 5" />
             <Field label="Liczba kursantów" name="max_participants" value={form.max_participants}
               onChange={handleChange} error={errors.max_participants} type="number" min="1" />
           </div>
@@ -226,7 +227,8 @@ export default function CourseCreate() {
             <Field label="Data egzaminu" name="exam_date" value={form.exam_date}
               onChange={handleChange} error={errors.exam_date} type="date" />
             <Field label="Miejsce egzaminu" name="exam_location" value={form.exam_location}
-              onChange={handleChange} error={errors.exam_location} />
+              onChange={handleChange} error={errors.exam_location}
+              placeholder="np. 30-001 Kraków, ul. Medyczna 5" />
           </div>
         </Section>
 
